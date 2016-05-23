@@ -1,0 +1,200 @@
+﻿@charset "utf-8";
+
+* { margin: 0; padding: 0; border: 0; outline: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; -webkit-box-sizing: border-box; box-sizing: border-box }
+:after, :before { -webkit-backface-visibility: hidden; backface-visibility: hidden; -webkit-box-sizing: border-box; box-sizing: border-box }
+a, abbr, acronym, address, applet, article, aside, audio, b, big, blockquote, body, canvas, caption, center, cite, code, dd, del, details, dfn, div, dl, dt, em, embed, fieldset, figcaption, figure, footer, form, h1, h2, h3, h4, h5, h6, header, hgroup, html, i, iframe, img, ins, kbd, label, legend, li, mark, menu, nav, object, ol, output, p, pre, q, ruby, s, samp, section, small, span, strike, strong, sub, summary, sup, table, tbody, td, tfoot, th, thead, time, tr, tt, u, ul, var, video { border: 0; margin: 0; padding: 0; width: auto; height: auto; font-size: 100%; vertical-align: baseline }
+table { border-collapse: collapse }
+li, ol, ul { list-style: none }
+img { border: none }
+a { outline: 0 }
+
+html {
+	width: 100%;
+	height: 100%;
+	font-size: 62.5%;
+}
+body {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	background: #000;
+	color: #FFF;
+	font-size: 13px;
+	font-size: 1.3rem;
+	font-family: "Oxygen Mono", "Helvetica Neue", Helvetica, Arial, "ヒラギノ角ゴ ProN W3", "Hiragino Kaku Gothic ProN", "游ゴシック", YuGothic, "メイリオ", Meiryo, sans-serif;
+	line-height: 1;
+	letter-spacing: 0.075em;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+	        tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+a:link { color: #FFF; text-decoration: none; }
+a:visited { color: #FFF; text-decoration: none; }
+a:hover { color: #FFF; text-decoration: none; }
+a:active { color: #FFF; text-decoration: none; }
+::selection { color: #FFF; background: #4F4F4F; }
+::-moz-selection { color: #FFF; background: #4F4F4F; }
+
+.webcam {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+.video {
+	position: absolute;
+	display: none;
+}
+.canvas {
+	position: absolute;
+	top: 0; left: 0;
+	bottom: 0; right: 0;
+	margin: auto;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+.canvas > canvas {
+	position: absolute;
+	top: 50%;
+	-webkit-transform: translateY(-50%);
+	        transform: translateY(-50%);
+	width: 100% !important;
+	height: auto !important;
+}
+.mask {
+	display: -webkit-flex;
+	display:         flex;
+	-webkit-justify-content: center;
+	        justify-content: center;
+	-webkit-align-items: center;
+	        align-items: center;
+	-webkit-align-content: center;
+	        align-content: center;
+	position: absolute;
+	top: 0; left: 0;
+	bottom: 0; right: 0;
+	margin: auto;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: #434F4F;
+	text-align: center;
+	z-index: 100;
+	pointer-events: none;
+}
+.text h1 {
+	position: relative;
+	font-size: 2.3rem;
+	font-family: "Noto Sans", sans-serif;
+	letter-spacing: 0.1em;
+	margin-bottom: 15px;
+	-moz-osx-font-smoothing :grayscale;
+	 -webkit-font-smoothing: antialiased;
+}
+.text h1 span {
+	position: absolute;
+	top: -1.75em; right: 0;
+	color: #FFF;
+	font-size: .9rem;
+	font-weight: 400;
+}
+.text p {
+	position: relative;
+	color: #9BA5A5;
+	font-size: 1rem;
+}
+.loader {
+	display: block;
+	position: absolute;
+	top: 0; left: 0;
+	bottom: -128px; right: 0;
+	margin: auto;
+	height: 32px;
+	width: 32px;
+	-webkit-animation: loader-1 4.8s linear infinite;
+	        animation: loader-1 4.8s linear infinite;
+}
+@-webkit-keyframes loader-1 {
+	0%   { -webkit-transform: rotate(0deg); }
+	100% { -webkit-transform: rotate(360deg); }
+}
+@keyframes loader-1 {
+	0%   { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+.loader span {
+	display: block;
+	position: absolute;
+	height: 32px;
+	width: 32px;
+	clip: rect(0, 32px, 32px, 16px);
+	-webkit-animation: loader-2 1.2s linear infinite;
+	        animation: loader-2 1.2s linear infinite;
+}
+@-webkit-keyframes loader-2 {
+	0%   { -webkit-transform: rotate(0deg); }
+	100% { -webkit-transform: rotate(220deg); }
+}
+@keyframes loader-2 {
+	0%   { transform: rotate(0deg); }
+	100% { transform: rotate(220deg); }
+}
+.loader span::after {
+	content: "";
+	position: absolute;
+	top: 0; left: 0;
+	bottom: 0; right: 0;
+	margin: auto;
+	height: 32px;
+	width: 32px;
+	clip: rect(0, 32px, 32px, 16px);
+	border: 3px solid #343E3E;
+	border-radius: 50%;
+	-webkit-animation: loader-3 1.2s cubic-bezier(0.770, 0.000, 0.175, 1.000) infinite;
+	        animation: loader-3 1.2s cubic-bezier(0.770, 0.000, 0.175, 1.000) infinite;
+}
+@-webkit-keyframes loader-3 {
+	0%   { -webkit-transform: rotate(-140deg); }
+	50%  { -webkit-transform: rotate(-160deg); }
+	100% { -webkit-transform: rotate(140deg); }
+}
+@keyframes loader-3 {
+	0%   { transform: rotate(-140deg); }
+	50%  { transform: rotate(-160deg); }
+	100% { transform: rotate(140deg); }
+}
+
+/* dat.GUI */
+.dg {
+	color: #868686  !important;
+	font-family: "Oxygen Mono", sans-serif !important;
+}
+.dg .cr.boolean,
+.dg .cr.string,
+.dg .cr.number {
+	border-left-color: #434F4F !important;
+}
+.dg .cr.function {
+	border-left-color: #000 !important;
+}
+.dg .cr.function,
+.dg .cr.function:hover {
+	background: #000 !important;
+}
+.dg .cr.number input[type="text"] {
+	color: #868686 !important;
+}
+.dg .c .slider-fg {
+	background: #434F4F !important;
+}
+.dg .c .slider:hover .slider-fg {
+	background: #434F4F !important;
+}
+.dg li {
+	-webkit-transition: height .25s cubic-bezier(0.645, 0.045, 0.355, 1.000) 0s !important;
+	        transition: height .25s cubic-bezier(0.645, 0.045, 0.355, 1.000) 0s !important;
+}
+.dg li.title {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
