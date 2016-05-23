@@ -1,1 +1,115 @@
-THREE.BloomPass=function(e,r,o,n){e=void 0!==e?e:1,r=void 0!==r?r:25,o=void 0!==o?o:4,n=void 0!==n?n:256;var t={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBFormat};this.renderTargetX=new THREE.WebGLRenderTarget(n,n,t),this.renderTargetY=new THREE.WebGLRenderTarget(n,n,t),void 0===THREE.CopyShader&&console.error("THREE.BloomPass relies on THREE.CopyShader");var i=THREE.CopyShader;this.copyUniforms=THREE.UniformsUtils.clone(i.uniforms),this.copyUniforms.opacity.value=e,this.materialCopy=new THREE.ShaderMaterial({uniforms:this.copyUniforms,vertexShader:i.vertexShader,fragmentShader:i.fragmentShader,blending:THREE.AdditiveBlending,transparent:!0}),void 0===THREE.ConvolutionShader&&console.error("THREE.BloomPass relies on THREE.ConvolutionShader");var a=THREE.ConvolutionShader;this.convolutionUniforms=THREE.UniformsUtils.clone(a.uniforms),this.convolutionUniforms.uImageIncrement.value=THREE.BloomPass.blurX,this.convolutionUniforms.cKernel.value=THREE.ConvolutionShader.buildKernel(o),this.materialConvolution=new THREE.ShaderMaterial({uniforms:this.convolutionUniforms,vertexShader:a.vertexShader,fragmentShader:a.fragmentShader,defines:{KERNEL_SIZE_FLOAT:r.toFixed(1),KERNEL_SIZE_INT:r.toFixed(0)}}),this.enabled=!0,this.needsSwap=!1,this.clear=!1,this.camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1),this.scene=new THREE.Scene,this.quad=new THREE.Mesh(new THREE.PlaneBufferGeometry(2,2),null),this.scene.add(this.quad)},THREE.BloomPass.prototype={render:function(e,r,o,n,t){t&&e.context.disable(e.context.STENCIL_TEST),this.quad.material=this.materialConvolution,this.convolutionUniforms.tDiffuse.value=o,this.convolutionUniforms.uImageIncrement.value=THREE.BloomPass.blurX,e.render(this.scene,this.camera,this.renderTargetX,!0),this.convolutionUniforms.tDiffuse.value=this.renderTargetX,this.convolutionUniforms.uImageIncrement.value=THREE.BloomPass.blurY,e.render(this.scene,this.camera,this.renderTargetY,!0),this.quad.material=this.materialCopy,this.copyUniforms.tDiffuse.value=this.renderTargetY,t&&e.context.enable(e.context.STENCIL_TEST),e.render(this.scene,this.camera,o,this.clear)}},THREE.BloomPass.blurX=new THREE.Vector2(.001953125,0),THREE.BloomPass.blurY=new THREE.Vector2(0,.001953125);
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.BloomPass = function ( strength, kernelSize, sigma, resolution ) {
+
+	strength = ( strength !== undefined ) ? strength : 1;
+	kernelSize = ( kernelSize !== undefined ) ? kernelSize : 25;
+	sigma = ( sigma !== undefined ) ? sigma : 4.0;
+	resolution = ( resolution !== undefined ) ? resolution : 256;
+
+	// render targets
+
+	var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
+
+	this.renderTargetX = new THREE.WebGLRenderTarget( resolution, resolution, pars );
+	this.renderTargetY = new THREE.WebGLRenderTarget( resolution, resolution, pars );
+
+	// copy material
+
+	if ( THREE.CopyShader === undefined )
+		console.error( "THREE.BloomPass relies on THREE.CopyShader" );
+
+	var copyShader = THREE.CopyShader;
+
+	this.copyUniforms = THREE.UniformsUtils.clone( copyShader.uniforms );
+
+	this.copyUniforms[ "opacity" ].value = strength;
+
+	this.materialCopy = new THREE.ShaderMaterial( {
+
+		uniforms: this.copyUniforms,
+		vertexShader: copyShader.vertexShader,
+		fragmentShader: copyShader.fragmentShader,
+		blending: THREE.AdditiveBlending,
+		transparent: true
+
+	} );
+
+	// convolution material
+
+	if ( THREE.ConvolutionShader === undefined )
+		console.error( "THREE.BloomPass relies on THREE.ConvolutionShader" );
+
+	var convolutionShader = THREE.ConvolutionShader;
+
+	this.convolutionUniforms = THREE.UniformsUtils.clone( convolutionShader.uniforms );
+
+	this.convolutionUniforms[ "uImageIncrement" ].value = THREE.BloomPass.blurX;
+	this.convolutionUniforms[ "cKernel" ].value = THREE.ConvolutionShader.buildKernel( sigma );
+
+	this.materialConvolution = new THREE.ShaderMaterial( {
+
+		uniforms: this.convolutionUniforms,
+		vertexShader:  convolutionShader.vertexShader,
+		fragmentShader: convolutionShader.fragmentShader,
+		defines: {
+			"KERNEL_SIZE_FLOAT": kernelSize.toFixed( 1 ),
+			"KERNEL_SIZE_INT": kernelSize.toFixed( 0 )
+		}
+
+	} );
+
+	this.enabled = true;
+	this.needsSwap = false;
+	this.clear = false;
+
+
+	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this.scene  = new THREE.Scene();
+
+	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+	this.scene.add( this.quad );
+
+};
+
+THREE.BloomPass.prototype = {
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		if ( maskActive ) renderer.context.disable( renderer.context.STENCIL_TEST );
+
+		// Render quad with blured scene into texture (convolution pass 1)
+
+		this.quad.material = this.materialConvolution;
+
+		this.convolutionUniforms[ "tDiffuse" ].value = readBuffer;
+		this.convolutionUniforms[ "uImageIncrement" ].value = THREE.BloomPass.blurX;
+
+		renderer.render( this.scene, this.camera, this.renderTargetX, true );
+
+
+		// Render quad with blured scene into texture (convolution pass 2)
+
+		this.convolutionUniforms[ "tDiffuse" ].value = this.renderTargetX;
+		this.convolutionUniforms[ "uImageIncrement" ].value = THREE.BloomPass.blurY;
+
+		renderer.render( this.scene, this.camera, this.renderTargetY, true );
+
+		// Render original scene with superimposed blur to texture
+
+		this.quad.material = this.materialCopy;
+
+		this.copyUniforms[ "tDiffuse" ].value = this.renderTargetY;
+
+		if ( maskActive ) renderer.context.enable( renderer.context.STENCIL_TEST );
+
+		renderer.render( this.scene, this.camera, readBuffer, this.clear );
+
+	}
+
+};
+
+THREE.BloomPass.blurX = new THREE.Vector2( 0.001953125, 0.0 );
+THREE.BloomPass.blurY = new THREE.Vector2( 0.0, 0.001953125 );

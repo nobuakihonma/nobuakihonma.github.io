@@ -1,15 +1,15 @@
 /**
  * @author alteredq / http://alteredqualia.com/
  *
- * Colorify shader
+ * Luminosity
+ * http://en.wikipedia.org/wiki/Luminosity
  */
 
-THREE.ColorifyShader = {
+THREE.LuminosityShader = {
 
 	uniforms: {
 
-		"tDiffuse": { type: "t", value: null },
-		"color":    { type: "c", value: new THREE.Color( 0xffffff ) }
+		"tDiffuse": { type: "t", value: null }
 
 	},
 
@@ -20,6 +20,7 @@ THREE.ColorifyShader = {
 		"void main() {",
 
 			"vUv = uv;",
+
 			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
 
 		"}"
@@ -28,7 +29,6 @@ THREE.ColorifyShader = {
 
 	fragmentShader: [
 
-		"uniform vec3 color;",
 		"uniform sampler2D tDiffuse;",
 
 		"varying vec2 vUv;",
@@ -38,9 +38,10 @@ THREE.ColorifyShader = {
 			"vec4 texel = texture2D( tDiffuse, vUv );",
 
 			"vec3 luma = vec3( 0.299, 0.587, 0.114 );",
+
 			"float v = dot( texel.xyz, luma );",
 
-			"gl_FragColor = vec4( v * color, texel.w );",
+			"gl_FragColor = vec4( v, v, v, texel.w );",
 
 		"}"
 
