@@ -2,10 +2,10 @@
 (function (WEBCAM) {
 
 	WEBCAM.info = {
-		'ver'    : '0.4.1',
-		'update' : '2016-05-23',
-		'url'    : 'https://rbv912.github.io/webcam/',
-		'author' : 'Nobuaki Honma'
+		ver    : '0.4.2',
+		update : '2016-05-24',
+		url    : 'https://rbv912.github.io/webcam/',
+		author : 'Nobuaki Honma'
 	}
 
 	var WebCam = (function () {
@@ -238,6 +238,12 @@
 			this.glitchPass.goWild = this.glitchParams.goWild;
 			if (this.glitchParams.enable) this.composer.addPass(this.glitchPass);
 
+			// @shaders/StaticTVShader.js
+			this.staticPass = new THREE.ShaderPass(THREE.StaticShader);
+			this.staticPass.uniforms['amount'].value = this.staticParams.amount;
+			this.staticPass.uniforms['size'].value = this.staticParams.size;
+			if (this.staticParams.enable) this.composer.addPass(this.staticPass);
+
 			// @shaders/BadTVShader.js
 			this.badTVPass = new THREE.ShaderPass(THREE.BadTVShader);
 			this.badTVPass.uniforms['distortion'].value = this.badTVParams.distort;
@@ -264,12 +270,12 @@
 			this.icoGeometry = new THREE.IcosahedronGeometry(125, 1);
 			this.icoMaterial = [
 				new THREE.MeshPhongMaterial({
-					shading    : THREE.AdditiveBlending,
-					color      : 0xFFFFFF,
-					wireframe  : true,
-					transparent: true,
-					fog        : true,
-					opacity    : .35
+					shading     : THREE.AdditiveBlending,
+					color       : 0xFFFFFF,
+					wireframe   : true,
+					fog         : true,
+					transparent : true,
+					opacity     : .35
 				})
 			];
 
@@ -348,7 +354,8 @@
 				// 頂点を登録する用
 				var lineGeometry = new THREE.BufferGeometry();
 
-				// 頂点の場所を格納していくarrayを用意。各頂点（x, y, z）の3つの数字があるので3倍する
+				// 頂点の場所を格納していくarrayを用意
+				// 各頂点（x, y, z）の3つの数字があるので3倍する
 				_this.pos[i] = new Float32Array(_this.lineNum * 3);
 
 				var lineMaterial = new THREE.LineBasicMaterial({
@@ -365,12 +372,12 @@
 				_this.line[i].geometry.setDrawRange(0, 2);
 
 				_this.line[i].array = _this.line[i].geometry.attributes.position.array;
-				_this.line[i].array[0] = 250;     //x1
-				_this.line[i].array[1] = 0;       //y1
-				_this.line[i].array[2] = 0;       //z1
-				_this.line[i].array[3] = 260;     //x2
-				_this.line[i].array[4] = 0;       //y2
-				_this.line[i].array[5] = 0;       //z2
+				_this.line[i].array[0] = 250; // x1
+				_this.line[i].array[1] = 0;   // y1
+				_this.line[i].array[2] = 0;   // z1
+				_this.line[i].array[3] = 260; // x2
+				_this.line[i].array[4] = 0;   // y2
+				_this.line[i].array[5] = 0;   // z2
 				_this.line[i].geometry.addGroup(0, 2, 0);
 
 				_this.scene.add(_this.line[i]);
@@ -420,8 +427,9 @@
 					}
 
 					// シェーダーに経過時間を送る
-					_this.badTVPass.uniforms['time'].value = time;
 					_this.filmPass.uniforms['time'].value = time;
+					_this.badTVPass.uniforms['time'].value = time;
+					_this.staticPass.uniforms['time'].value = time;
 					time += 0.05;
 
 				}
@@ -442,11 +450,11 @@
 			function saveImage() {
 				var canvas = document.getElementsByTagName('canvas')[0],
 				    base64 = canvas.toDataURL('image/jpeg'),
-				    blob = Base64toBlob(base64);
+				    blob   = base64toBlob(base64);
 
 				saveBlob(blob, 'screenshot-' + (new Date).getTime() + '.jpg');
 
-				function Base64toBlob(base64) {
+				function base64toBlob(base64) {
 					var i, tmp = base64.split(','),
 					    data = atob(tmp[1]),
 					    mime = tmp[0].split(':')[1].split(';')[0],
@@ -524,6 +532,11 @@
 				enable    : false,
 				goWild    : false
 			},
+			this.staticParams = {
+				enable    : false,
+				amount    : 0.05,
+				size      : 4
+			},
 			this.badTVParams = {
 				enable    : false,
 				distort   : 3.0,
@@ -583,7 +596,7 @@
 			// this.film.open();
 
 			// Colorify
-			this.colorify = this.gui.addFolder('Color');
+			this.colorify = this.gui.addFolder('Colorify');
 			this.colorify.add(this.colorifyParams, 'enable').onChange(this._addPostrocessing.bind(this));
 			this.colorify.add(this.colorifyParams, 'r', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
 			this.colorify.add(this.colorifyParams, 'g', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
@@ -593,7 +606,7 @@
 			// RGB Shift
 			this.rgb = this.gui.addFolder('RGB Shift');
 			this.rgb.add(this.rgbShiftParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.rgb.add(this.rgbShiftParams, 'amount', -0.01, 0.01).step(0.01).onChange(this._addPostrocessing.bind(this));
+			this.rgb.add(this.rgbShiftParams, 'amount', -0.01, 0.01).step(0.001).onChange(this._addPostrocessing.bind(this));
 			// this.rgb.open();
 
 			// Glitch
@@ -601,6 +614,13 @@
 			this.glitch.add(this.glitchParams, 'enable').onChange(this._addPostrocessing.bind(this));
 			this.glitch.add(this.glitchParams, 'goWild').name('wild').onChange(this._addPostrocessing.bind(this));
 			// this.glitch.open();
+
+			// Static
+			this.static = this.gui.addFolder('Static');
+			this.static.add(this.staticParams, 'enable').onChange(this._addPostrocessing.bind(this));
+			this.static.add(this.staticParams, 'amount', 0.0, 0.3).step(0.01).onChange(this._addPostrocessing.bind(this));
+			this.static.add(this.staticParams, 'size', 0.0, 50).step(1.0).onChange(this._addPostrocessing.bind(this));
+			// this.static.open();
 
 			// Bad TV
 			this.badTV = this.gui.addFolder('Bad TV');
@@ -612,11 +632,11 @@
 			// this.badTV.open();
 
 			// Vignette Effect
-			this.guiVignette = this.gui.addFolder('Vignette');
-			this.guiVignette.add(this.vignetteParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.guiVignette.add(this.vignetteParams, 'offset', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
-			this.guiVignette.add(this.vignetteParams, 'darkness', 0.0, 5.0).onChange(this._addPostrocessing.bind(this));
-			// this.guiVignette.open();
+			this.vignette = this.gui.addFolder('Vignette');
+			this.vignette.add(this.vignetteParams, 'enable').onChange(this._addPostrocessing.bind(this));
+			this.vignette.add(this.vignetteParams, 'offset', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
+			this.vignette.add(this.vignetteParams, 'darkness', 0.0, 5.0).onChange(this._addPostrocessing.bind(this));
+			// this.vignette.open();
 
 			// Save Image
 			this.saveImage = this.gui.add(this.saveImageParams, 'save').name('Save Image');
@@ -649,6 +669,7 @@
 			$.ajax({ url: './assets/js/vendor/threejs/shaders/VerticalBlurShader.js?noChace=' + (new Date).getTime(),    dataType: 'script' }),
 			$.ajax({ url: './assets/js/vendor/threejs/shaders/VignetteShader.js?noChace=' + (new Date).getTime(),        dataType: 'script' }),
 			$.ajax({ url: './assets/js/vendor/threejs/shaders/BadTVShader.js?noChace=' + (new Date).getTime(),           dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/StaticShader.js?noChace=' + (new Date).getTime(),          dataType: 'script' }),
 			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/EffectComposer.js?noChace=' + (new Date).getTime(), dataType: 'script' }),
 			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/RenderPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
 			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/ShaderPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
