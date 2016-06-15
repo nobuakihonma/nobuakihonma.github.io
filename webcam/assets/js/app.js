@@ -2,8 +2,8 @@
 (function (WEBCAM) {
 
 	WEBCAM.info = {
-		ver    : '0.4.2',
-		update : '2016-05-24',
+		ver    : '0.4.3',
+		update : '2016-06-15',
 		url    : 'https://rbv912.github.io/webcam/',
 		author : 'Nobuaki Honma'
 	}
@@ -452,7 +452,7 @@
 				    base64 = canvas.toDataURL('image/jpeg'),
 				    blob   = base64toBlob(base64);
 
-				saveBlob(blob, 'screenshot-' + (new Date).getTime() + '.jpg');
+				saveBlob(blob, 'screenshot-' + new Date().getTime() + '.jpg');
 
 				function base64toBlob(base64) {
 					var i, tmp = base64.split(','),
@@ -657,25 +657,25 @@
 	// Fire !
 	window.addEventListener('load', function() {
 		$.when(
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/CopyShader.js?noChace=' + (new Date).getTime(),            dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/BleachBypassShader.js?noChace=' + (new Date).getTime(),    dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/ColorifyShader.js?noChace=' + (new Date).getTime(),        dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/ConvolutionShader.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/DotScreenShader.js?noChace=' + (new Date).getTime(),       dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/DigitalGlitch.js?noChace=' + (new Date).getTime(),         dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/FilmShader.js?noChace=' + (new Date).getTime(),            dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/RGBShiftShader.js?noChace=' + (new Date).getTime(),        dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/HorizontalBlurShader.js?noChace=' + (new Date).getTime(),  dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/VerticalBlurShader.js?noChace=' + (new Date).getTime(),    dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/VignetteShader.js?noChace=' + (new Date).getTime(),        dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/BadTVShader.js?noChace=' + (new Date).getTime(),           dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/StaticShader.js?noChace=' + (new Date).getTime(),          dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/EffectComposer.js?noChace=' + (new Date).getTime(), dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/RenderPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/ShaderPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/MaskPass.js?noChace=' + (new Date).getTime(),       dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/FilmPass.js?noChace=' + (new Date).getTime(),       dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/GlitchPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' })
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/CopyShader.js?noChace=' + new Date().getTime(),            dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/BleachBypassShader.js?noChace=' + new Date().getTime(),    dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/ColorifyShader.js?noChace=' + new Date().getTime(),        dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/ConvolutionShader.js?noChace=' + new Date().getTime(),     dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/DotScreenShader.js?noChace=' + new Date().getTime(),       dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/DigitalGlitch.js?noChace=' + new Date().getTime(),         dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/FilmShader.js?noChace=' + new Date().getTime(),            dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/RGBShiftShader.js?noChace=' + new Date().getTime(),        dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/HorizontalBlurShader.js?noChace=' + new Date().getTime(),  dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/VerticalBlurShader.js?noChace=' + new Date().getTime(),    dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/VignetteShader.js?noChace=' + new Date().getTime(),        dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/BadTVShader.js?noChace=' + new Date().getTime(),           dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/StaticShader.js?noChace=' + new Date().getTime(),          dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/EffectComposer.js?noChace=' + new Date().getTime(), dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/RenderPass.js?noChace=' + new Date().getTime(),     dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/ShaderPass.js?noChace=' + new Date().getTime(),     dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/MaskPass.js?noChace=' + new Date().getTime(),       dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/FilmPass.js?noChace=' + new Date().getTime(),       dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/GlitchPass.js?noChace=' + new Date().getTime(),     dataType: 'script' })
 		)
 		.done(function() {
 			var webcamEffects = new WebCam();
