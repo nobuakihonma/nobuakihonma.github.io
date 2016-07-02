@@ -1,12 +1,14 @@
 ﻿var WEBCAM;
 (function (WEBCAM) {
 
+	'use strict';
+
 	WEBCAM.info = {
-		ver    : '0.4.3',
-		update : '2016-06-15',
+		ver    : '0.4.31',
+		update : '2016-07-02',
 		url    : 'https://rbv912.github.io/webcam/',
 		author : 'Nobuaki Honma'
-	}
+	};
 
 	var WebCam = (function () {
 
@@ -112,7 +114,7 @@
 
 		/*** WebGL (Three.js) 処理 ***/
 		p._createWebGL = function () {
-			_this = this;
+			var _this = this;
 
 			// シーンを作成
 			this.scene = new THREE.Scene();
@@ -174,7 +176,7 @@
 			this._datGUI();
 
 			// ポストプロセス処理を追加
-			this._addPostrocessing();
+			this._addPostprocessing();
 
 			// 外側のオブジェクトを作成
 			this._addIcosahedronGeometry();
@@ -194,7 +196,7 @@
 		};
 
 		/*** ポストプロセス ***/
-		p._addPostrocessing = function () {
+		p._addPostprocessing = function () {
 			this.composer = new THREE.EffectComposer(this.renderer);
 			this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
 
@@ -267,6 +269,8 @@
 
 		/*** 外側のオブジェクト ***/
 		p._addIcosahedronGeometry = function () {
+			var _this = this;
+
 			this.icoGeometry = new THREE.IcosahedronGeometry(125, 1);
 			this.icoMaterial = [
 				new THREE.MeshPhongMaterial({
@@ -307,7 +311,6 @@
 
 			// ポイントを追加
 			this.icoParticleMesh = new THREE.Points(this.icoParticleGeometry, this.icoParticleMaterial);
-			this.icoParticleMesh.position = new THREE.Vector3(0, 0, 0);
 			this.icoParticleMesh.sortParticles = false;
 			this.scene.add(this.icoParticleMesh);
 		};
@@ -345,6 +348,8 @@
 
 		/*** サークス状のラインを作成 ***/
 		p._addLineGeometry = function () {
+			var _this = this;
+
 			this.line    = [];
 			this.pos     = [];
 			this.lineNum = 180;
@@ -564,78 +569,78 @@
 
 			// Dot Screen
 			this.dotScreen = this.gui.addFolder('Dot Screen');
-			this.dotScreen.add(this.dotScreenParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.dotScreen.add(this.dotScreenParams, 'scale', 0.0, 3).onChange(this._addPostrocessing.bind(this));
-			this.dotScreen.add(this.dotScreenParams, 'angle', 0.0, 8).onChange(this._addPostrocessing.bind(this));
+			this.dotScreen.add(this.dotScreenParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.dotScreen.add(this.dotScreenParams, 'scale', 0.0, 3).onChange(this._addPostprocessing.bind(this));
+			this.dotScreen.add(this.dotScreenParams, 'angle', 0.0, 8).onChange(this._addPostprocessing.bind(this));
 			// this.dotScreen.open();
 
 			// Bleach Effect
 			this.guiBleach = this.gui.addFolder('Bleach');
-			this.guiBleach.add(this.bleachParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.guiBleach.add(this.bleachParams, 'opacity', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
+			this.guiBleach.add(this.bleachParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.guiBleach.add(this.bleachParams, 'opacity', 0.0, 1.0).onChange(this._addPostprocessing.bind(this));
 			// this.guiBleach.open();
 
 			// Horizontal Blur
 			this.hBlur = this.gui.addFolder('Horizontal Blur');
-			this.hBlur.add(this.hBlurParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.hBlur.add(this.hBlurParams, 'h', 0.0, 5.0).name('blur').onChange(this._addPostrocessing.bind(this));
+			this.hBlur.add(this.hBlurParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.hBlur.add(this.hBlurParams, 'h', 0.0, 5.0).name('blur').onChange(this._addPostprocessing.bind(this));
 			// this.hBlur.open();
 
 			// Vertical Blur
 			this.vBlur = this.gui.addFolder('Vertical Blur');
-			this.vBlur.add(this.vBlurParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.vBlur.add(this.vBlurParams, 'v', 0.0, 5.0).name('blur').onChange(this._addPostrocessing.bind(this));
+			this.vBlur.add(this.vBlurParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.vBlur.add(this.vBlurParams, 'v', 0.0, 5.0).name('blur').onChange(this._addPostprocessing.bind(this));
 			// this.vBlur.open();
 
 			// Film
 			this.film = this.gui.addFolder('Film');
-			this.film.add(this.filmParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.film.add(this.filmParams, 'sIntensity', 0.0, 2.0).name('depth').step(0.1).onChange(this._addPostrocessing.bind(this));
-			this.film.add(this.filmParams, 'nIntensity', 0.0, 2.0).name('depth 2').step(0.1).onChange(this._addPostrocessing.bind(this));
-			this.film.add(this.filmParams, 'count', 0.0, 2000).onChange(this._addPostrocessing.bind(this));
+			this.film.add(this.filmParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.film.add(this.filmParams, 'sIntensity', 0.0, 2.0).name('depth').step(0.1).onChange(this._addPostprocessing.bind(this));
+			this.film.add(this.filmParams, 'nIntensity', 0.0, 2.0).name('depth 2').step(0.1).onChange(this._addPostprocessing.bind(this));
+			this.film.add(this.filmParams, 'count', 0.0, 2000).onChange(this._addPostprocessing.bind(this));
 			// this.film.open();
 
 			// Colorify
 			this.colorify = this.gui.addFolder('Colorify');
-			this.colorify.add(this.colorifyParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.colorify.add(this.colorifyParams, 'r', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
-			this.colorify.add(this.colorifyParams, 'g', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
-			this.colorify.add(this.colorifyParams, 'b', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
+			this.colorify.add(this.colorifyParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.colorify.add(this.colorifyParams, 'r', 0.0, 1.0).onChange(this._addPostprocessing.bind(this));
+			this.colorify.add(this.colorifyParams, 'g', 0.0, 1.0).onChange(this._addPostprocessing.bind(this));
+			this.colorify.add(this.colorifyParams, 'b', 0.0, 1.0).onChange(this._addPostprocessing.bind(this));
 			// this.colorify.open();
 
 			// RGB Shift
 			this.rgb = this.gui.addFolder('RGB Shift');
-			this.rgb.add(this.rgbShiftParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.rgb.add(this.rgbShiftParams, 'amount', -0.01, 0.01).step(0.001).onChange(this._addPostrocessing.bind(this));
+			this.rgb.add(this.rgbShiftParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.rgb.add(this.rgbShiftParams, 'amount', -0.01, 0.01).step(0.001).onChange(this._addPostprocessing.bind(this));
 			// this.rgb.open();
 
 			// Glitch
 			this.glitch = this.gui.addFolder('Glitch');
-			this.glitch.add(this.glitchParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.glitch.add(this.glitchParams, 'goWild').name('wild').onChange(this._addPostrocessing.bind(this));
+			this.glitch.add(this.glitchParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.glitch.add(this.glitchParams, 'goWild').name('wild').onChange(this._addPostprocessing.bind(this));
 			// this.glitch.open();
 
 			// Static
 			this.static = this.gui.addFolder('Static');
-			this.static.add(this.staticParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.static.add(this.staticParams, 'amount', 0.0, 0.3).step(0.01).onChange(this._addPostrocessing.bind(this));
-			this.static.add(this.staticParams, 'size', 0.0, 50).step(1.0).onChange(this._addPostrocessing.bind(this));
+			this.static.add(this.staticParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.static.add(this.staticParams, 'amount', 0.0, 0.3).step(0.01).onChange(this._addPostprocessing.bind(this));
+			this.static.add(this.staticParams, 'size', 0.0, 50).step(1.0).onChange(this._addPostprocessing.bind(this));
 			// this.static.open();
 
 			// Bad TV
 			this.badTV = this.gui.addFolder('Bad TV');
-			this.badTV.add(this.badTVParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.badTV.add(this.badTVParams, 'distort', 0.0, 10).step(0.1).name('thick').onChange(this._addPostrocessing.bind(this));
-			this.badTV.add(this.badTVParams, 'distort2', 0.0, 10).step(0.1).name('fine').onChange(this._addPostrocessing.bind(this));
-			this.badTV.add(this.badTVParams, 'speed', 0.0, 1.0).step(0.01).name('speed').onChange(this._addPostrocessing.bind(this));
-			this.badTV.add(this.badTVParams, 'rollSpeed', 0.0, 1.0).step(0.01).name('roll').onChange(this._addPostrocessing.bind(this));
+			this.badTV.add(this.badTVParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.badTV.add(this.badTVParams, 'distort', 0.0, 10).step(0.1).name('thick').onChange(this._addPostprocessing.bind(this));
+			this.badTV.add(this.badTVParams, 'distort2', 0.0, 10).step(0.1).name('fine').onChange(this._addPostprocessing.bind(this));
+			this.badTV.add(this.badTVParams, 'speed', 0.0, 1.0).step(0.01).name('speed').onChange(this._addPostprocessing.bind(this));
+			this.badTV.add(this.badTVParams, 'rollSpeed', 0.0, 1.0).step(0.01).name('roll').onChange(this._addPostprocessing.bind(this));
 			// this.badTV.open();
 
 			// Vignette Effect
 			this.vignette = this.gui.addFolder('Vignette');
-			this.vignette.add(this.vignetteParams, 'enable').onChange(this._addPostrocessing.bind(this));
-			this.vignette.add(this.vignetteParams, 'offset', 0.0, 1.0).onChange(this._addPostrocessing.bind(this));
-			this.vignette.add(this.vignetteParams, 'darkness', 0.0, 5.0).onChange(this._addPostrocessing.bind(this));
+			this.vignette.add(this.vignetteParams, 'enable').onChange(this._addPostprocessing.bind(this));
+			this.vignette.add(this.vignetteParams, 'offset', 0.0, 1.0).onChange(this._addPostprocessing.bind(this));
+			this.vignette.add(this.vignetteParams, 'darkness', 0.0, 5.0).onChange(this._addPostprocessing.bind(this));
 			// this.vignette.open();
 
 			// Save Image
@@ -681,7 +686,9 @@
 			var webcamEffects = new WebCam();
 			console.log('WebCam Effects ver.' + WEBCAM.info.ver);
 		})
-		.fail(function() { });
+		.fail(function() {
+			console.log('$.ajax failed');
+		});
 	}, false);
 
 })(WEBCAM || (WEBCAM = {}));
