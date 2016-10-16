@@ -4,8 +4,8 @@
 	'use strict';
 
 	WEBCAM.info = {
-		ver    : '0.4.31',
-		update : '2016-07-02',
+		ver    : '0.5.0',
+		update : '2016-10-16',
 		url    : 'https://rbv912.github.io/webcam/',
 		author : 'Nobuaki Honma'
 	};
@@ -27,23 +27,13 @@
 			this.video = document.getElementById('js-video');
 			this.video.autoplay = true;
 			this.localMediaStream = null;
-
-			// 動画とオーディオの設定
-			this.option = {
-				video: {
-					width: 1280,
-					height: 720,
-					mandatory: { 'minWidth': 1280 }
-				},
-				audio: true
-			}
 		};
 
 		/*** WebCam が使用できるかチェック ***/
 		p._hasGetUserMedia = function () {
 			// API が使えるかのチェック
-			var hasGetUserMedia = function() {
-				return (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+			var hasGetUserMedia = function () {
+				return (navigator.mediaDevices.getUserMedia);
 			}
 			// API がサポートされていない時の処理
 			if ( !hasGetUserMedia() ) {
@@ -55,53 +45,52 @@
 		p._getUserMedia = function () {
 			var _this = this;
 
-			// API エラー時の処理
-			var onFailSoHard = function(e) {
-				console.log('Error ', e);
-			};
-
 			// WebCam ストリーミングを <video> タグに描画
-			window.URL = window.URL || window.webkitURL;
-			navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+			navigator.mediaDevices.getUserMedia({
+				video: {
+					width: { min: 1280 },
+					height: { min: 720 }
+				}, audio: true })
+				.then(function (stream) {
+					// WebCam Video Stream
+					_this.video.src = window.URL.createObjectURL(stream);
+					_this.video.volume = 0.0;
+					_this.localMediaStream = stream;
 
-			navigator.getUserMedia(this.option, function(stream) {
-				// WebCam Video Stream
-				_this.video.src = window.URL.createObjectURL(stream);
-				_this.video.volume = 0.0;
-				_this.localMediaStream = stream;
+					// Web Audio API の準備
+					_this.audio = new Audio();
+					_this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+					_this.audioSampleRate = _this.audioCtx.sampleRate;
 
-				// Web Audio API の準備
-				_this.audio = new Audio();
-				_this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-				_this.audioSampleRate = _this.audioCtx.sampleRate;
+					// ローパスフィルタを作成
+					_this.lowpassFilter = _this.audioCtx.createBiquadFilter();
+					_this.lowpassFilter.type = 'allpass';
+					_this.lowpassFilter.frequency.value = 20000;
 
-				// ローパスフィルタを作成
-				_this.lowpassFilter = _this.audioCtx.createBiquadFilter();
-				_this.lowpassFilter.type = 'allpass';
-				_this.lowpassFilter.frequency.value = 20000;
+					// オーディオアナライザーを作成
+					_this.audioAnalyser = _this.audioCtx.createAnalyser();
+					_this.audioAnalyser.fftSize = 2048;
+					_this.audioAnalyser.smoothingTimeContant = 0.9;
 
-				// オーディオアナライザーを作成
-				_this.audioAnalyser = _this.audioCtx.createAnalyser();
-				_this.audioAnalyser.fftSize = 2048;
-				_this.audioAnalyser.smoothingTimeContant = 0.9;
+					// WebCam のマイク音声に繋ぐ
+					_this.audioSource = _this.audioCtx.createMediaStreamSource(stream);
+					_this.audioSource.connect(_this.lowpassFilter);
+					_this.lowpassFilter.connect(_this.audioAnalyser);
 
-				// WebCam のマイク音声に繋ぐ
-				_this.audioSource = _this.audioCtx.createMediaStreamSource(stream);
-				_this.audioSource.connect(_this.lowpassFilter);
-				_this.lowpassFilter.connect(_this.audioAnalyser);
+					// バッファを取得
+					_this.bufferLength = _this.audioAnalyser.frequencyBinCount;
+					_this.dataArray = new Uint8Array(_this.bufferLength * 2);
 
-				// バッファを取得
-				_this.bufferLength = _this.audioAnalyser.frequencyBinCount;
-				_this.dataArray = new Uint8Array(_this.bufferLength * 2);
-
-			}, onFailSoHard);
+				}).catch(function (error) {
+					return;
+				});
 
 			// カメラのサイズを取得 / 取得後 Three.js でレンダリング
-			this.video.addEventListener('loadeddata', function() {
-				(function getVideoResolution() { // Firefox 用 イベント取得待機処理
+			this.video.addEventListener('loadeddata', function () {
+				(function getVideoResolution () { // Firefox 用 イベント取得待機処理
 					_this.videoW = _this.video.videoWidth,
 					_this.videoH = _this.video.videoHeight;
-					if (_this.videoW != 0) {
+					if ( _this.videoW !== 0 ) {
 						TweenLite.to('#js-text',  .45, { autoAlpha: 0, ease: Linear.easeInOut, delay: .1 });
 						TweenLite.to('#js-mask' , .65, { scaleY: .0025, ease: Expo.easeInOut, delay: .35 });
 						TweenLite.to('#js-mask' , .45, { scaleX: 0, ease: Expo.easeInOut, delay: .65, onComplete: _this._createWebGL() });
@@ -204,47 +193,47 @@
 			this.dotScreenPass = new THREE.ShaderPass(THREE.DotScreenShader);
 			this.dotScreenPass.uniforms['scale'].value = this.dotScreenParams.scale;
 			this.dotScreenPass.uniforms['angle'].value = this.dotScreenParams.angle;
-			if (this.dotScreenParams.enable) this.composer.addPass(this.dotScreenPass);
+			if ( this.dotScreenParams.enable ) this.composer.addPass(this.dotScreenPass);
 
 			// @shaders/shaderBleach.js
 			this.bleachPass = new THREE.ShaderPass(THREE.BleachBypassShader);
 			this.bleachPass.uniforms['opacity'].value = this.bleachParams.opacity;
-			if (this.bleachParams.enable) this.composer.addPass(this.bleachPass);
+			if ( this.bleachParams.enable ) this.composer.addPass(this.bleachPass);
 
 			// @shaders/HorizontalBlurShader.js
 			this.hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
 			this.hBlurPass.uniforms['h'].value = this.hBlurParams.h / ( this.windowWidth / 1 );
-			if (this.hBlurParams.enable) this.composer.addPass(this.hBlurPass);
+			if ( this.hBlurParams.enable ) this.composer.addPass(this.hBlurPass);
 
 			// @shaders/VerticalBlurShader.js
 			this.vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
 			this.vBlurPass.uniforms['v'].value = this.vBlurParams.v / ( this.windowHeight / 1 );
-			if (this.vBlurParams.enable) this.composer.addPass(this.vBlurPass);
+			if ( this.vBlurParams.enable ) this.composer.addPass(this.vBlurPass);
 
 			// @shaders/FilmShader.js
 			this.filmPass = new THREE.FilmPass( this.filmParams.sIntensity, this.filmParams.nIntensity, this.filmParams.count, true );
-			if (this.filmParams.enable) this.composer.addPass(this.filmPass);
+			if ( this.filmParams.enable ) this.composer.addPass(this.filmPass);
 
 			// @shaders/ColorifyShader.js
 			this.colorifyPass = new THREE.ShaderPass(THREE.ColorifyShader);
 			this.colorifyPass.uniforms['color'].value.setRGB(this.colorifyParams.r, this.colorifyParams.g, this.colorifyParams.b);
-			if (this.colorifyParams.enable) this.composer.addPass(this.colorifyPass);
+			if ( this.colorifyParams.enable ) this.composer.addPass(this.colorifyPass);
 
 			// @shaders/RGBShiftShader.js
 			this.rgbShiftPass = new THREE.ShaderPass(THREE.RGBShiftShader);
 			this.rgbShiftPass.uniforms['amount'].value = this.rgbShiftParams.amount;
-			if (this.rgbShiftParams.enable) this.composer.addPass(this.rgbShiftPass);
+			if ( this.rgbShiftParams.enable ) this.composer.addPass(this.rgbShiftPass);
 
 			// @shaders/DigitalGlitch.js / postprocessing/GlitchPass.js
 			this.glitchPass = new THREE.GlitchPass();
 			this.glitchPass.goWild = this.glitchParams.goWild;
-			if (this.glitchParams.enable) this.composer.addPass(this.glitchPass);
+			if ( this.glitchParams.enable ) this.composer.addPass(this.glitchPass);
 
 			// @shaders/StaticTVShader.js
 			this.staticPass = new THREE.ShaderPass(THREE.StaticShader);
 			this.staticPass.uniforms['amount'].value = this.staticParams.amount;
 			this.staticPass.uniforms['size'].value = this.staticParams.size;
-			if (this.staticParams.enable) this.composer.addPass(this.staticPass);
+			if ( this.staticParams.enable ) this.composer.addPass(this.staticPass);
 
 			// @shaders/BadTVShader.js
 			this.badTVPass = new THREE.ShaderPass(THREE.BadTVShader);
@@ -252,13 +241,13 @@
 			this.badTVPass.uniforms['distortion2'].value = this.badTVParams.distort2;
 			this.badTVPass.uniforms['speed'].value = this.badTVParams.speed;
 			this.badTVPass.uniforms['rollSpeed'].value = this.badTVParams.rollSpeed;
-			if (this.badTVParams.enable) this.composer.addPass(this.badTVPass);
+			if ( this.badTVParams.enable ) this.composer.addPass(this.badTVPass);
 
 			// @shaders/VignetteShader.js
 			this.vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
 			this.vignettePass.uniforms['offset'].value   = this.vignetteParams.offset;
 			this.vignettePass.uniforms['darkness'].value = this.vignetteParams.darkness;
-			if (this.vignetteParams.enable) this.composer.addPass(this.vignettePass);
+			if ( this.vignetteParams.enable ) this.composer.addPass(this.vignettePass);
 
 			// @shaders/CopyShader.js
 			this.copyPass = new THREE.ShaderPass(THREE.CopyShader);
@@ -269,10 +258,11 @@
 
 		/*** 外側のオブジェクト ***/
 		p._addIcosahedronGeometry = function () {
+
 			var _this = this;
 
-			this.icoGeometry = new THREE.IcosahedronGeometry(125, 1);
-			this.icoMaterial = [
+			var icoGeometry = new THREE.IcosahedronGeometry(125, 1);
+			var icoMaterial = [
 				new THREE.MeshPhongMaterial({
 					shading     : THREE.AdditiveBlending,
 					color       : 0xFFFFFF,
@@ -284,23 +274,23 @@
 			];
 
 			// ポイントクラウドを頂点座標に追加
-			this.icoMesh = THREE.SceneUtils.createMultiMaterialObject(this.icoGeometry, this.icoMaterial);
+			this.icoMesh = THREE.SceneUtils.createMultiMaterialObject(icoGeometry, icoMaterial);
 			this.icoMesh.position.x = 0;
 			this.icoMesh.rotation.x = 0;
 			this.scene.add(this.icoMesh);
 
 			// 頂点座標を取得
-			this.icoParticleGeometry = new THREE.Geometry();
-			for ( var i = 0; i < this.icoGeometry.vertices.length; i++ ) {
-				_this.icoVertex = new THREE.Vector3();
-				_this.icoVertex.x = _this.icoGeometry.vertices[i].x;
-				_this.icoVertex.y = _this.icoGeometry.vertices[i].y;
-				_this.icoVertex.z = _this.icoGeometry.vertices[i].z;
-				_this.icoParticleGeometry.vertices.push(_this.icoVertex);
+			var icoParticleGeometry = new THREE.Geometry();
+			for ( var i = 0; i < icoGeometry.vertices.length; i++ ) {
+				var icoVertex = new THREE.Vector3();
+				icoVertex.x = icoGeometry.vertices[i].x;
+				icoVertex.y = icoGeometry.vertices[i].y;
+				icoVertex.z = icoGeometry.vertices[i].z;
+				icoParticleGeometry.vertices.push(icoVertex);
 			}
 
 			// ポイントを生成
-			this.icoParticleMaterial = new THREE.PointsMaterial({
+			var icoParticleMaterial = new THREE.PointsMaterial({
 				blending    : THREE.AdditiveBlending,
 				color       : 0xFFFFFF,
 				size        : 4,
@@ -310,7 +300,7 @@
 			});
 
 			// ポイントを追加
-			this.icoParticleMesh = new THREE.Points(this.icoParticleGeometry, this.icoParticleMaterial);
+			this.icoParticleMesh = new THREE.Points(icoParticleGeometry, icoParticleMaterial);
 			this.icoParticleMesh.sortParticles = false;
 			this.scene.add(this.icoParticleMesh);
 		};
@@ -318,11 +308,11 @@
 		/*** 内側のオブジェクト ***/
 		p._addSphereGeometry = function () {
 
-			this.sphereGeometry = new THREE.SphereBufferGeometry(50, 32, 16);
-			this.sphereGeometry.dynamic = true;
-			this.sphereGeometry.computeFaceNormals();
+			var sphereGeometry = new THREE.SphereBufferGeometry(50, 32, 16);
+			sphereGeometry.dynamic = true;
+			sphereGeometry.computeFaceNormals();
 
-			this.sphereMaterial = new THREE.MeshPhongMaterial({
+			var sphereMaterial = new THREE.MeshPhongMaterial({
 				shininess   : 5,
 				fog         : true,
 				transparent : true,
@@ -332,15 +322,16 @@
 			});
 
 			var _this = this;
-			if (_this.sphereGeoParams.show) {
-				_this.sphereGeometryMesh = new THREE.Mesh(_this.sphereGeometry, _this.sphereMaterial);
+
+			if ( _this.sphereGeoParams.show ) {
+				_this.sphereGeometryMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
 				_this.scene.add(_this.sphereGeometryMesh);
 			} else {
-				if (_this.sphereGeometryMesh) {
+				if ( _this.sphereGeometryMesh ) {
 					_this.sphereGeometryMesh.geometry.dispose();
 					_this.scene.remove(_this.sphereGeometryMesh);
-					_this.sphereGeometry.dispose();
-					_this.sphereMaterial.dispose();
+					sphereGeometry.dispose();
+					sphereMaterial.dispose();
 				}
 			}
 
@@ -348,9 +339,10 @@
 
 		/*** サークス状のラインを作成 ***/
 		p._addLineGeometry = function () {
+
 			var _this = this;
 
-			this.line    = [];
+			this.lines   = [];
 			this.pos     = [];
 			this.lineNum = 180;
 
@@ -359,9 +351,9 @@
 				// 頂点を登録する用
 				var lineGeometry = new THREE.BufferGeometry();
 
-				// 頂点の場所を格納していくarrayを用意
-				// 各頂点（x, y, z）の3つの数字があるので3倍する
-				_this.pos[i] = new Float32Array(_this.lineNum * 3);
+				// 頂点の場所を格納していくarrayを用意, 各頂点（x, y, z）の3つの数字があるので3倍する
+				var vertex = new Float32Array(_this.lineNum * 3);
+				_this.pos.push(vertex);
 
 				var lineMaterial = new THREE.LineBasicMaterial({
 					color       : 0xFFFFFF,
@@ -370,30 +362,33 @@
 					opacity     : 1,
 				});
 
-				_this.line[i] = new THREE.Line(lineGeometry, lineMaterial);
-				_this.line[i].rotation.z = i * (Math.PI / 2) / 45;
+				var line = new THREE.Line(lineGeometry, lineMaterial);
+				line.rotation.z = i * (Math.PI / 2) / 45;
 
-				_this.line[i].geometry.addAttribute('position', new THREE.BufferAttribute(_this.pos[i], 3));
-				_this.line[i].geometry.setDrawRange(0, 2);
+				line.geometry.addAttribute('position', new THREE.BufferAttribute(vertex, 3));
+				line.geometry.setDrawRange(0, 2);
 
-				_this.line[i].array = _this.line[i].geometry.attributes.position.array;
-				_this.line[i].array[0] = 250; // x1
-				_this.line[i].array[1] = 0;   // y1
-				_this.line[i].array[2] = 0;   // z1
-				_this.line[i].array[3] = 260; // x2
-				_this.line[i].array[4] = 0;   // y2
-				_this.line[i].array[5] = 0;   // z2
-				_this.line[i].geometry.addGroup(0, 2, 0);
+				line.array = line.geometry.attributes.position.array;
+				line.array[0] = 250; // x1
+				line.array[1] = 0;   // y1
+				line.array[2] = 0;   // z1
+				line.array[3] = 260; // x2
+				line.array[4] = 0;   // y2
+				line.array[5] = 0;   // z2
+				line.geometry.addGroup(0, 2, 0);
 
-				_this.scene.add(_this.line[i]);
+				_this.lines.push(line);
+				_this.scene.add(line);
 			}
 		};
 
 		/*** アニメーション ***/
 		p._animateCanvas = function () {
+
 			var _this = this, time = 0.0;
-			TweenLite.ticker.addEventListener('tick', RAF);
-			function RAF() {
+			TweenLite.ticker.addEventListener('tick', rAF);
+
+			function rAF() {
 				if ( _this.video.readyState === _this.video.HAVE_ENOUGH_DATA ) {
 
 					_this.composer.render();
@@ -403,37 +398,38 @@
 					_this.icoMesh.rotation.y      +=  0.001;
 					_this.icoParticleMesh.rotation.x  +=  0.001;
 					_this.icoParticleMesh.rotation.y  +=  0.001;
-					if (_this.sphereGeoParams.show) _this.sphereGeometryMesh.rotation.x += -0.0025;
-					if (_this.sphereGeoParams.show) _this.sphereGeometryMesh.rotation.y += -0.0025;
+
+					if ( _this.sphereGeoParams.show ) _this.sphereGeometryMesh.rotation.x += -0.0025;
+					if ( _this.sphereGeoParams.show ) _this.sphereGeometryMesh.rotation.y += -0.0025;
 
 					_this.dataArray = new Uint8Array(_this.bufferLength);
 					_this.audioAnalyser.getByteFrequencyData(_this.dataArray);
 
-					for (var i = 0; i < _this.lineNum; i++) {
-
+					for ( var i = 0; i < _this.lineNum; i++ ) {
 						// アニメーション変数
-						var animVal = Math.cos(_this.dataArray[i] / _this.lineNum);
-						if (_this.hBlurParams.enable) var hBlurPass = _this.hBlurParams.h / ( _this.windowWidth  * ( (_this.bufferLength / _this.dataArray[i]) / _this.lineNum * 7.5 ) );
-						if (_this.vBlurParams.enable) var vBlurPass = _this.vBlurParams.v / ( _this.windowHeight * ( (_this.bufferLength / _this.dataArray[i]) / _this.lineNum * 7.5 ) );
-						if (_this.rgbShiftParams.enable) var rgbShift = animVal / 512;
+						var arr = _this.dataArray[i];
+						var animVal = Math.cos(arr / _this.lineNum);
+						if ( _this.hBlurParams.enable ) var hBlurPass = _this.hBlurParams.h / ( _this.windowWidth  * ( (_this.bufferLength / _this.dataArray[i]) / _this.lineNum * 7.5 ) );
+						if ( _this.vBlurParams.enable ) var vBlurPass = _this.vBlurParams.v / ( _this.windowHeight * ( (_this.bufferLength / _this.dataArray[i]) / _this.lineNum * 7.5 ) );
+						if ( _this.rgbShiftParams.enable ) var rgbShift = animVal / 512;
 
 						// エフェクトアップデート
-						if (_this.hBlurParams.enable) _this.hBlurPass.uniforms['h'].value = hBlurPass;
-						if (_this.vBlurParams.enable) _this.vBlurPass.uniforms['v'].value = vBlurPass;
-						if (_this.rgbShiftParams.enable) _this.rgbShiftPass.uniforms['amount'].value = _this.rgbShiftParams.amount + rgbShift;
+						if ( _this.hBlurParams.enable ) _this.hBlurPass.uniforms['h'].value = hBlurPass;
+						if ( _this.vBlurParams.enable ) _this.vBlurPass.uniforms['v'].value = vBlurPass;
+						if ( _this.rgbShiftParams.enable ) _this.rgbShiftPass.uniforms['amount'].value = _this.rgbShiftParams.amount + rgbShift;
 
 						// オーディオアップデート
-						_this.line[i].geometry.verticesNeedUpdate = true;
-						_this.line[i].geometry.attributes.position.needsUpdate = true;
-						_this.line[i].geometry.attributes.position.array[0] = 250;
-						_this.line[i].geometry.attributes.position.array[3] = 260 - animVal * _this.lineNum / 3;
-						_this.line[i].rotation.z += 0.0005;
-
+						var line = _this.lines[i];
+						line.geometry.verticesNeedUpdate = true;
+						line.geometry.attributes.position.needsUpdate = true;
+						line.geometry.attributes.position.array[0] = 250;
+						line.geometry.attributes.position.array[3] = 260 - animVal * _this.lineNum / 3;
+						line.rotation.z += 0.0005;
 					}
 
 					// シェーダーに経過時間を送る
-					_this.filmPass.uniforms['time'].value = time;
-					_this.badTVPass.uniforms['time'].value = time;
+					_this.filmPass.uniforms['time'].value   = time;
+					_this.badTVPass.uniforms['time'].value  = time;
 					_this.staticPass.uniforms['time'].value = time;
 					time += 0.05;
 
@@ -446,7 +442,7 @@
 
 			// Visibility Hidden か Display None 状態じゃないとキャプチャが撮れない不具合対策
 			TweenLite.to('#js-canvas', .15, { autoAlpha: 0, ease: Linear.easeInOut, onComplete: function() {
-				setTimeout(function() {
+				setTimeout(function () {
 					saveImage();
 					TweenLite.to('#js-canvas', .15, { autoAlpha: 1, clearProps: 'all', ease: Linear.easeInOut });
 				}, 5); }
@@ -457,7 +453,7 @@
 				    base64 = canvas.toDataURL('image/jpeg'),
 				    blob   = base64toBlob(base64);
 
-				saveBlob(blob, 'screenshot-' + new Date().getTime() + '.jpg');
+				saveBlob(blob, 'screenshot-' + (new Date).getTime() + '.jpg');
 
 				function base64toBlob(base64) {
 					var i, tmp = base64.split(','),
@@ -495,6 +491,8 @@
 
 		/*** GUI ***/
 		p._datGUI = function () {
+
+			var _this = this;
 
 			// Settings
 			this.sphereGeoParams = {
@@ -662,25 +660,25 @@
 	// Fire !
 	window.addEventListener('load', function() {
 		$.when(
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/CopyShader.js?noChace=' + new Date().getTime(),            dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/BleachBypassShader.js?noChace=' + new Date().getTime(),    dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/ColorifyShader.js?noChace=' + new Date().getTime(),        dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/ConvolutionShader.js?noChace=' + new Date().getTime(),     dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/DotScreenShader.js?noChace=' + new Date().getTime(),       dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/DigitalGlitch.js?noChace=' + new Date().getTime(),         dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/FilmShader.js?noChace=' + new Date().getTime(),            dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/RGBShiftShader.js?noChace=' + new Date().getTime(),        dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/HorizontalBlurShader.js?noChace=' + new Date().getTime(),  dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/VerticalBlurShader.js?noChace=' + new Date().getTime(),    dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/VignetteShader.js?noChace=' + new Date().getTime(),        dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/BadTVShader.js?noChace=' + new Date().getTime(),           dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/shaders/StaticShader.js?noChace=' + new Date().getTime(),          dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/EffectComposer.js?noChace=' + new Date().getTime(), dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/RenderPass.js?noChace=' + new Date().getTime(),     dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/ShaderPass.js?noChace=' + new Date().getTime(),     dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/MaskPass.js?noChace=' + new Date().getTime(),       dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/FilmPass.js?noChace=' + new Date().getTime(),       dataType: 'script' }),
-			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/GlitchPass.js?noChace=' + new Date().getTime(),     dataType: 'script' })
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/CopyShader.js?noChace=' + (new Date).getTime(),            dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/BleachBypassShader.js?noChace=' + (new Date).getTime(),    dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/ColorifyShader.js?noChace=' + (new Date).getTime(),        dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/ConvolutionShader.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/DotScreenShader.js?noChace=' + (new Date).getTime(),       dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/DigitalGlitch.js?noChace=' + (new Date).getTime(),         dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/FilmShader.js?noChace=' + (new Date).getTime(),            dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/RGBShiftShader.js?noChace=' + (new Date).getTime(),        dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/HorizontalBlurShader.js?noChace=' + (new Date).getTime(),  dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/VerticalBlurShader.js?noChace=' + (new Date).getTime(),    dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/VignetteShader.js?noChace=' + (new Date).getTime(),        dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/BadTVShader.js?noChace=' + (new Date).getTime(),           dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/shaders/StaticShader.js?noChace=' + (new Date).getTime(),          dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/EffectComposer.js?noChace=' + (new Date).getTime(), dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/RenderPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/ShaderPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/MaskPass.js?noChace=' + (new Date).getTime(),       dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/FilmPass.js?noChace=' + (new Date).getTime(),       dataType: 'script' }),
+			$.ajax({ url: './assets/js/vendor/threejs/postprocessing/GlitchPass.js?noChace=' + (new Date).getTime(),     dataType: 'script' })
 		)
 		.done(function() {
 			var webcamEffects = new WebCam();
